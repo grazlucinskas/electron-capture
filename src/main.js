@@ -14,7 +14,7 @@ ipcMain.on('return-content-size', function (events, size) {
   captureTimes = Math.ceil(contentSize.height/contentSize.windowHeight)
   targetWindow.webContents.send('move-page-to', 1)
 })
-ipcMain.on('return-move-page', function (events, page) {
+ipcMain.on('return-move-page', async (events, page) => {
   let options = {
     x: 0,
     y: 0,
@@ -25,7 +25,7 @@ ipcMain.on('return-move-page', function (events, page) {
     options.height = contentSize.height - ((captureTimes - 1) * contentSize.windowHeight)
     options.y = contentSize.windowHeight - options.height
   }
-  targetWindow.capturePage(options, function (image) {
+  const image = await targetWindow.capturePage(options)
     if (!fsExistsSync(tempDir)) {
       fs.mkdirSync(tempDir)
     }
@@ -36,7 +36,6 @@ ipcMain.on('return-move-page', function (events, page) {
         flattenPNG()
       }
     })
-  })
 })
 
 function flattenPNG () {
@@ -54,10 +53,10 @@ function flattenPNG () {
     })
     // Create a canvas that fits images
     canvas = pixelsmith.createCanvas(canvasWidth - scrollBarWidth, canvasHeight)
-    // Add the images to canvas 
+    // Add the images to canvas
     imgs.forEach(function(img, index){
       canvas.addImage(imgs[index], 0, y);
-      y += imgs[index].height 
+      y += imgs[index].height
     })
     // Export canvas to image
     var resultStream = canvas['export']({format: 'png'})
